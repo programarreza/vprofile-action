@@ -88,7 +88,13 @@ jobs:
         run: cat ~/.kube/config
 
       - name: Login to ECR
-        run: kubectl create secret docker-registry regcred --docker-server=${{ secrets.REGISTRY }} --docker-username=gitops  --docker-password=$(aws ecr Gitops123$)
+        run: |
+          kubectl create secret docker-registry regcred \
+            --docker-server=${{ secrets.REGISTRY }} \
+            --docker-username=gitops \
+            --docker-password=${{ secrets.DOCKER_PASSWORD }} \
+
+        # run: kubectl create secret docker-registry regcred --docker-server=${{ secrets.REGISTRY }} --docker-username=gitops  --docker-password=$(aws ecr Gitops123$)
 
       - name: Deploy Helm
         uses: bitovi/github-actions-deploy-eks-helm@v1.2.8
