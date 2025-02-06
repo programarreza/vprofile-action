@@ -6,7 +6,7 @@ env:
   EKS_CLUSTER: vprofile-eks
 
 jobs:
-# Job-1: Testing
+  # Job-1: Testing
   Testing:
     runs-on: ubuntu-latest
     steps:
@@ -53,7 +53,7 @@ jobs:
       #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       #     SONAR_HOST_URL: ${{ secrets.SONAR_URL }} #OPTIONAL
 
-# Job-2: Build and Publish
+  # Job-2: Build and Publish
   BUILD_AND_PUBLISH:
     needs: Testing
     runs-on: ubuntu-latest
@@ -76,7 +76,7 @@ jobs:
           build-args: |
             BASE_IMAGE=tomcat:9.0.54-jre11
 
-# Job-3: Deploy To EKS
+  # Job-3: Deploy To EKS
   DeployToEKS:
     needs: BUILD_AND_PUBLISH
     runs-on: ubuntu-latest
@@ -98,7 +98,7 @@ jobs:
         run: cat ~/.kube/config
 
       - name: Login to ECR
-        run: kubectl create secret docker-registry regcred --docker-server=${{ secrets.REGISTRY }} --docker-username=AWS  --docker-password=$(aws ecr get-login-password) 
+        run: kubectl create secret docker-registry regcred --docker-server=${{ secrets.REGISTRY }} --docker-username=${{ secrets.AWS_USER_NAME }}  --docker-password=${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Deploy Helm
         uses: bitovi/github-actions-deploy-eks-helm@v1.2.8
@@ -111,4 +111,4 @@ jobs:
           chart-path: helm/vprofilecharts
           namespace: default
           values: appimage=${{ secrets.REGISTRY }}/${{ env.ECR_REPOSITORY }},apptag=${{ github.run_number }}
-          name: vprofile-stack    
+          name: vprofile-stack
