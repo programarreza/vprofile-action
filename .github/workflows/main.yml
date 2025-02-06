@@ -6,7 +6,7 @@ env:
   EKS_CLUSTER: vprofile-eks
 
 jobs:
-  # Job-1: Testing
+# Job-1: Testing
   Testing:
     runs-on: ubuntu-latest
     steps:
@@ -43,7 +43,17 @@ jobs:
           -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml
           -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/
 
-  # Job-2: Build and Publish
+      # Check the Quality Gate status.
+      # - name: SonarQube Quality Gate check
+      #   id: sonarqube-quality-gate-check
+      #   uses: sonarsource/sonarqube-quality-gate-action@master
+      #   # Force to fail step after specific time.
+      #   timeout-minutes: 5
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_HOST_URL: ${{ secrets.SONAR_URL }} #OPTIONAL
+
+# Job-2: Build and Publish
   BUILD_AND_PUBLISH:
     needs: Testing
     runs-on: ubuntu-latest
@@ -66,49 +76,7 @@ jobs:
           build-args: |
             BASE_IMAGE=tomcat:9.0.54-jre11
 
-  # Job-3: Deploy To EKS
-  # DeployToEKS:
-  #   needs: BUILD_AND_PUBLISH
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Code checkout
-  #       uses: actions/checkout@v4
-
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v1
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ${{ env.AWS_REGION }}
-
-  #     - name: Get Kube config file
-  #       run: aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER }}
-
-  #     - name: Print config file
-  #       run: cat ~/.kube/config
-
-  #     - name: Login to ECR
-  #       run: |
-  #         kubectl create secret docker-registry regcred
-  #           --docker-server=${{ secrets.REGISTRY }}
-  #           --docker-username=gitops
-  #           --docker-password=${{ secrets.DOCKER_PASSWORD }}
-
-  #       # run: kubectl create secret docker-registry regcred --docker-server=${{ secrets.REGISTRY }} --docker-username=gitops  --docker-password=$(aws ecr Gitops123$)
-
-  #     - name: Deploy Helm
-  #       uses: bitovi/github-actions-deploy-eks-helm@v1.2.8
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ${{ env.AWS_REGION }}
-  #         cluster-name: ${{ env.EKS_CLUSTER }}
-  #         #config-files: .github/values/dev.yaml
-  #         chart-path: helm/vprofilecharts
-  #         namespace: default
-  #         values: appimage=${{ secrets.REGISTRY }}/${{ env.ECR_REPOSITORY }},apptag=${{ github.run_number }}
-  #         name: vprofile-stack
-
+# Job-3: Deploy To EKS
   DeployToEKS:
     needs: BUILD_AND_PUBLISH
     runs-on: ubuntu-latest
@@ -130,7 +98,17 @@ jobs:
         run: cat ~/.kube/config
 
       - name: Login to ECR
-        run: kubectl create secret docker-registry regcred --docker-server=${{ secrets.REGISTRY }} --docker-username=gitops --docker-password=${{ secrets.DOCKER_PASSWORD }} --docker-email=gitops@gmail.com
+        run: kubectl create secret docker-registry regcred --docker-server=${{ secrets.REGISTRY }} --docker-username=gitops  --docker-password=$(aws ecr get-login-password) 
 
       - name: Deploy Helm
         uses: bitovi/github-actions-deploy-eks-helm@v1.2.8
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          cluster-name: ${{ env.EKS_CLUSTER }}
+          #config-files: .github/values/dev.yaml
+          chart-path: helm/vprofilecharts
+          namespace: default
+          values: appimage=${{ secrets.REGISTRY }}/${{ env.ECR_REPOSITORY }},apptag=${{ github.run_number }}
+          name: vprofile-stack    
