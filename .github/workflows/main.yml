@@ -89,10 +89,10 @@ jobs:
 
       - name: Login to ECR
         run: |
-          kubectl create secret docker-registry regcred \
-            --docker-server=${{ secrets.REGISTRY }} \
-            --docker-username=gitops \
-            --docker-password=${{ secrets.DOCKER_PASSWORD }} \
+          kubectl create secret docker-registry regcred 
+            --docker-server=${{ secrets.REGISTRY }} 
+            --docker-username=gitops 
+            --docker-password=${{ secrets.DOCKER_PASSWORD }} 
 
         # run: kubectl create secret docker-registry regcred --docker-server=${{ secrets.REGISTRY }} --docker-username=gitops  --docker-password=$(aws ecr Gitops123$)
 
